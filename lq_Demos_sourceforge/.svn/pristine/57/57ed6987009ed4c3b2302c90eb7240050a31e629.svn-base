@@ -1,0 +1,123 @@
+一、泛型
+只给编译器用的。编译完后字节码中没有泛型的。
+泛型：如果等号左右都用到了泛型，必须类型一致。
+ArrayList<Object> list = new ArrayList<String>();错误的
+
+只有一边使用泛型，另一边不使用泛型是可以的。
+
+只有引用类型才能作为泛型方法的实际参数
+
+
+二、Web开发的基本概念
+    就是用网页做的客户端，用来人机交互客户端与服务器进行交互，就是以浏览器作为客户端的一种开发。我们开发的程序都在服务器上，因此我们是服务器端开发人员
+    服务器上的WEB资源：
+    静态资源：基本不变的。比如html、css、js
+    动态资源：根据不同环境而不同，动的。动态资源生成静态资源。比如：JSP、ASP
+
+    用Java开发动态资源的开发技术统称为Javaweb
+
+三、Web开发需要的服务器
+    JavaEE:是13种技术的总称。Servlet/JSP属于JavaEE技术的一种
+    常用的服务器：
+    WebLogic:支持JavaEE规范(即使用JavaEE技术开发的程序放到WebLogic中都能运行)。又称之为JavaEE容器：即实现了什么规范的服务器就叫做什么容器。属于重量级服务器(因为它支持JavaEE13种技术，而你的程序如果只用到了部分技术，但它同时还提供了其它没用到的技术的服务，这些服务占用了多余的内存，也就是说重量级轻量级是指内存中启动的服务的多少)。
+    WebSphereAS（Application Server）：支持JavaEE规范，属于重量级服务器
+    JbossAS：支持JavaEE规范。免费，属于重量级服务器
+    Tomcat：支持Servlet/JSP规范。轻量级服务器。
+
+Java相关规范（接口和抽象类）都是SUN制定
+    
+    学习web开发，需要先安装一台web服务器，然后再在web服务器中开发相应的web资源，供用户使用浏览器访问，否则无法让别人访问我们开发的资源，我们在开发中一般使用tomcat服务器
+
+    tomcat到官网下载，选择6.0，zip格式直接解压就可以，是绿色安装；tar.gz是linux下的压缩文件格式
+
+四、Tomcat的安装与启动遇到的问题(目标：TOmcat能启动)
+1、注意：不要把Tocmat装到有中文或空格的目录中。
+2、验证Tomcat是否成功
+	a、进入Tomcat\bin，执行startup.bat
+	b、启动过程中没有出错。最好还要打开浏览器：http://localhost:8080  看到猫说明OK
+	
+3、启动Tomcat遇到的问题：
+	***a、无法启动：配置系统环境变量JAVA_HOME=你的JDK的安装目录
+	
+	b、可能是端口被占用(可以使用Fport.exe工具来查询端口占用情况)
+
+	Tips:
+		HTTP协议规定，Web应用的默认端口是80
+		把Tomcat使用的默认端口8080改为Web应用的默认端口80？
+		
+		在TOmcat\conf目录中有一个server.xml
+		找到8080改为80，就可以使用默认端口了。
+
+4、Catalina_home=Tomcat的安装目录（不建议使用）(不建议使用是因为配置Catalina_home是为了在启动时告诉它tomcat的目录，但是假如你有多个tomcat目录的话，那么不管你执行哪个目录下的命令它们都会找到同一个tomcat目录，也就是你配置的Catalina_home环境变量所指向的tomcat，建议的方法是不配置Catalina_home环境变量，直接进入到要启动的tomcat目录中执行命令，这时它会自动将bin目录前面的目录设置为Catalina_home变量的值来启动服务)
+
+理解path环境变量的执行顺序后，就知道要想在cmd中的任何目录下都能执行startup.bat命令的话，需要在path环境变量中添加tomcat安装目录中bin文件夹的目录
+设置后还是无法启动，因为它找不到CATALINA_HOME环境变量，可以设置CATALINA_HOME环境变量，也可以不设置，不设置的话每次执行命令就要到tomcat的安装目录下执行命令
+
+五、Tomcat的目录结构（服务器厂商自定义的,其它服务器就不一定是这样的目录结构了）
+CATALINA_HOME：
+	*bin:运行Tomcat的相关命令
+	*conf：Tomcat的配置信息所在
+	*lib：Tomcat运行需要的jar包
+	*logs:Tomcat的运行日志
+	temp：存放临时文件的
+	*webapps:Web应用的存放目录。该目录中的每个目录都代表一个应用。
+	work：Tomcat的工作目录
+	
+*****六、JavaWeb应用的目录结构（SUN制定的，有严格要求）必须记住
+MyApp:(目录，应用的名称)
+	1.html
+	css
+		a.css
+	WEB-INF:此目录必须有，且大小必须完全一致。该目录中的资源，用户无法直接访问到。（非常重要）
+		classes:存放Java类的字节码文件
+		lib:存放本应用需要的jar包
+		web.xml:本应用的配置文件
+
+注意：tomcat的lib目录中的jar包可以供应用使用，但是应用中的lib目录中的jar包不能被tomcat使用
+
+***七、如何“部署”自己的应用到Tomcat中
+方式一：把你的应用拷贝到Tomcat\webapps目录下。
+方式二：把自己的应用打包成war包，再拷贝到Tomcat\webapps目录下
+	打包过程：进入你的应用目录，执行：jar -cvf MyApp.war .
+
+	将war包拷贝到Tomcat\webapps目录后，服务器会自动将war包解压成应用目录(相当于方式一)，在服务器启动时删除war包的话，解压的目录会同时删除，停止服务器后删除war包就不会删除应用目录
+	
+八、Tomcat组成部分详解：
+	虚拟目录：
+		方式一：（不建议使用，原因就是需要重新启动）
+			1、修改Tomcat\conf\server.xml，找到<Host name="localhost"/>元素
+			2、在其中增加一个子元素，内容如下：
+				<Context path="/haha" docBase="E:\MyApp"/>
+				path:虚拟目录的名称。给用户来访问的
+				docBase:实际应用的存放目录
+			3、重新启动Tomcat
+			4、访问资源：http://localhost:8080/haha/1.html就是访问E盘下MyApp目录中的1.html
+		**方式二：
+			在Tomcat\conf\[enginename]\[hostname]目录下建立一个特殊的文件，文件扩展名为xml；
+			文件的主文件名就是映射的虚拟路径（即<Context path="/haha" docBase="E:\MyApp"/>中的path）
+			增加以下内容：
+			<?xml version="1.0"?>
+			<Context docBase="E:\MyApp"/>
+			
+		练习：配置E盘上的MyApp作为默认应用
+		1、在Tomcat\conf\[enginename]\[hostname]目录下建立一个特殊的文件，文件名ROOT.xml；
+		2、由于默认应用特殊，也需要重新启动Tomcat
+		访问MyApp下的1.html
+		http://locahost:8080/1.html
+		
+		
+	虚拟主机：
+		配置的虚拟主机的域名如果已经注册过，那么域名解析时访问DNS服务器时就会访问已经注册的域名对应的IP地址，而不是本机，可以通过修改hosts文件，实现在局域网内进行访问，这时就不会访问DNS服务器了，因为在hosts文件中已经配置过了
+
+	连接器:
+		
+
+（作业）案例:默认端口\默认应用\默认主页
+默认端口：
+默认应用：
+默认主页：
+	修改应用中的web.xml文件
+	根元素下增加以下内容：
+		   <welcome-file-list>
+			<welcome-file>1.html</welcome-file>
+		   </welcome-file-list>

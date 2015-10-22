@@ -1,0 +1,196 @@
+*****一、HTTP协议
+		1.1协议的作用及版本
+			1.1.1HTTP是Hyper Text Transfer Protocol（超文本--html传输协议）。
+			1.1.2HTTP协议的作用是用于描述客户端与服务器间的数据传递的。
+			1.1.3：Http协议的版本：
+					1.0：特点：每次请求服务器上的资源都要建立新的连接，响应完毕后都会关闭连接。是无状态的协议。
+					1.1: 特点：在一次TCP/IP连接的基础上可以发出多次请求和得到多次的响应。比1.0多了一些请求和响应头。
+
+			HTTP协议是用来规定客户端与服务器之间进行数据传递所需要遵守的格式		
+
+		1.2协议的组成
+			1.2.1请求部分：
+				GET /App1/1.html HTTP/1.1
+				Accept: */*
+				Accept-Language: zh-cn
+				Accept-Encoding: gzip, deflate
+				User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 2.0.50727; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)
+				Host: localhost:8080
+				Connection: Keep-Alive
+				
+				username=admin&password=123
+				
+				请求部分由三部分组成的：
+					请求行：位于第一行
+					请求消息头：从第二行开始至第一个空行结束
+					请求正文：从第一个空行之后的都是正文
+					
+			1.2.2响应部分：
+				HTTP/1.1 200 OK
+				Server: Apache-Coyote/1.1
+				Accept-Ranges: bytes
+				ETag: W/"65-1366335797484"
+				Last-Modified: Fri, 19 Apr 2013 01:43:17 GMT
+				Content-Type: text/html
+				Content-Length: 65
+				Date: Fri, 19 Apr 2013 02:06:23 GMT
+				Warnning：w1
+				Warnning: w2
+
+				hello http
+				<a href="b.html">click</a>
+				<img src="1.jpg"/>
+
+				响应部分由三部分组成的：
+					响应行：位于第一行
+					响应消息头：从第二行开始至第一个空行结束
+					响应正文：从第一个空行之后的都是正文
+		1.3协议详细讲解
+				请求行：GET /App1/1.html HTTP/1.1
+						GET：请求方式。默认的请求方式。其他常用的请求方式还有POST。
+							GET的特点：默认的请求方式。
+								/App1/c.html?username=sdsfds&password=234324
+								把表单的请求的数据放在了请求的URI的后面。?username=sdsfds&password=234324
+								这样不好:暴露数据；请求行长度有限。
+							POST的特点(经常使用的)：借助HTML中的form表单。<form action="c.html" method="post">
+								请求参数出现在正文部分。长度木有限制。相对安全。
+						---------------------------
+						/App1/1.html:请求的资源的URI。(URL是必须有协议，主机和端口号的)
+						---------------------------
+						HTTP/1.1：客户端使用的协议的版本
+						
+				响应行：HTTP/1.1 200 OK
+						HTTP/1.1：服务器用的协议版本
+						200：响应码。代表服务器处理的结果的一种表示
+								200：正常
+								302/307：重定向
+								304:服务器的资源没有被修改(浏览器都有缓存，请求资源时会传递资源的最后修改时间和服务器上的资源进行比对，如果资源没有修改过，会返回304，浏览器就会从缓存中获取资源进行显示)
+								404：请求的资源不存在
+								500：服务器报错了
+						OK：响应码描述
+				请求消息头：向服务器传递附加信息
+					Accept:通知服务器，浏览器可以接受的MIME类型。（文件系统中用文件扩展名区分数据的类型。网络上用MIME类型来区分数据类型。Tomcat\conf\web.mxl）
+									MIME类型名称：大类型/小类型
+					Accept-Charset:通知服务器，浏览器支持的字符集
+					Accept-Encoding:通知服务器，浏览器能够解码的数据压缩方式。比如：gzip
+					Accept-language:通知服务器，所希望的语言
+					Host：请求的主机和端口
+					*Referer：是一个URL地址。取值是当前页面之前的那个页面地址。用于防盗链(可以通过请求资源的URL来判断是不是本网站的请求，从而知道是否是其他网站在盗用自己网站的资源)
+					*Content-Type:通知服务器，请求正文的MIME类型。
+							取值：application/x-www-form-urlencoded (默认值)(这个类型没有对应的文件类型)
+							对应的是form表单的enctype属性
+					If-Modified-Since:通知服务器，缓存的文件的最后修改时间。(请求资源时浏览器有缓存的话会将缓存文件的最后修改时间传给服务器，服务器会将这个头的值取出来与服务器中的资源的最后修改时间进行对比，如果时间相同那么说明资源没有修改过，服务器就返回304状态码，浏览器就会将缓存的文件显示出来)
+					User-Agent:通知服务器，浏览器类型.
+					Content-Length:表示请求消息正文的长度 
+					Connection:表示是否需要持久连接。如果服务器看到这里的值为“Keep -Alive”，或者看到请求使用的是HTTP 1.1（HTTP 1.1默认进行持久连接 
+					*****Cookie:这是最重要的请求头信息之一（会话有关）
+				响应消息头：
+					*Location:通知客户端，指示新的资源的位置（结合302/307来用。请求重定向,浏览器收到这个响应头之后就会自动重新发送请求，请求该资源）
+					Server:通知客户端，服务器的类型
+					*Content-Encoding:通知客户端，响应正文的压缩编码方式。常用的是gzip。(程序中使用GZIPOutputStream来对数据进行gzip压缩，同时要设置Content-Encoding响应头为gzip，否则浏览器会将压缩后的数据显示在页面上，加了之后浏览器会自动将压缩后的数据进行解压，同时显示在页面上，但是用HttpWatch看到的响应正文还是压缩后的数据，网站的页面都使用gzip压缩了，因为这样能使资源文件变得很小)
+					*Content-Length：通知客户端响应正文的数据大小(在设置Content-Encoding响应头信息的同时，也要设置Content-Length响应头，不设置的话浏览器也能自动获取到，但是这样会很慢)
+					*Content-Type:通知客户端响应正文的MIME类型(返回的MIME类型必须是浏览器能够接收的MIME类型，这个就是在请求消息头Accept中设置的)
+					*Refresh：让浏览器自动刷新。取值为整数（刷新的时间间隔，单位是秒）
+								Refresh:3(刷新到自己的页面)
+								Refresh:3;URL=其他资源的URI(刷新到其它的页面)
+					*Content-Disposition：通知客户端，以下载的方式打开资源。
+								Content-Disposition：attachment;filename=1.jpg(同时还要设置响应消息头Content-Type为二进制的MIME类型:application/octet-stream)
+					*****Set-Cookie:SS=Q0=5Lb_nQ; path=/search服务器端发送的Cookie（会话有关）
+					
+					*Expires: -1             网页的有效时间。单位是毫秒(只要设置成比当前毫秒小就行)
+					*Cache-Control: no-cache (1.1)  
+					*Pragma: no-cache   (1.0)                通知客户端不要缓存(下面两个头分别对应客户端使用HTTP1.1和HTTP1.0协议，上面三个头要一起都设置，因为不知道客户端使用的HTTP协议是1.0的还是1.1的)
+					响应消息头设置为不缓存后，如果之前浏览器已经有该资源的缓存的话，会删掉该缓存文件，如果没有的话就不自动缓存了
+
+
+	二、Servlet概述
+		1、Servlet是SUN公司制定的一套开发动态网页的技术。
+		2、JavaEE相关的类，包名一般都是以javax开头
+		
+*****三、编写第一个Servlet案例应用
+		1、建立一个标准的JavaWeb应用目录
+			FirstApp:
+				WEB-INF:
+					classes：
+					lib:
+					web.xml
+		2、进入classes目录，建立一个文本文件（所有的Servlet类都必须间接或直接实现javax.servlet.Servlet接口）(下面是通过继承类Servlet的GenericServlet类实现的)
+			package cn.itcast.servlet;
+
+			import java.io.*;
+			import javax.servlet.*;
+
+			public class FirstServlet extends GenericServlet{
+				public void service(ServletRequest req,
+										 ServletResponse res)
+								  throws ServletException,
+										 java.io.IOException{
+					OutputStream out = res.getOutputStream();
+					out.write("Hello Servlet".getBytes());
+					out.close();
+										 
+				}
+
+			}
+		3、进入classes目录，对FirstServlet进行编译：
+			前提：把servlet-api.jar加入到你的构建路径(即classpath)中:set classpath=%classpath%;C:\apache-tomcat-6.0.35\lib\servlet-api.jar
+			执行：javac -d . FirstServlet.java
+		4、修改web.xml，对FirstServlet进行url地址映射，配置如下：
+			<?xml version="1.0" encoding="ISO-8859-1"?>
+			<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+			   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+			   version="2.5"> 
+				<servlet>
+					<servlet-name>FirstServlet</servlet-name>
+					<servlet-class>cn.itcast.servlet.FirstServlet</servlet-class>
+						  
+				</servlet>
+				<servlet-mapping>
+					<servlet-name>FirstServlet</servlet-name>
+					<url-pattern>/hello</url-pattern>
+				</servlet-mapping>
+			</web-app>
+		5、把你的应用部署到Tomcat中。
+		6、访问地址：http://localhost:8080/FirstApp/hello就可以看到写的Servlet类的输出结果了。
+		
+*****四、Servlet的生命周期
+		容器最终要调用service方法为客户进行服务
+		1、Servlet接口中的常用方法：
+				public void init(ServletConfig config)：初始化。Servlet类被实例化后就执行，且执行一次。由容器进行调用
+				public void destroy()：销毁Servlet对象。由容器进行调用
+		在内存中一个Servlet只有一个实例。针对不同的用户请求，容器采用多线程的机制调用service方法的。
+		Servlet被容器实例化后就驻留在内存中，收到请求后会调用service方法，直到调用destroy方法销毁实例
+		
+		Servlet实例化和初始化方法，默认情况下，只有在第一次访问时才执行，且只执行一次。(那这时第一个访问的人打开页面会比较慢)
+		
+		希望在应用被Tomcat加载完毕后（此时还没有任何人访问），就实例化并完成初始化Servlet的工作？
+		<servlet>
+			<servlet-name>FirstServlet</servlet-name>
+			<servlet-class>cn.itcast.servlet.FirstServlet</servlet-class>
+			<load-on-startup>2</load-on-startup>
+		</servlet>
+*****五、Servlet的孩子们（模板方法设计模式）
+		如果设计与HTTP协议有关的Servlet，一般选择继承javax.servlet.http.HttpServlet.因为Servlet和GenericServlet只是规定了servlet通用的东西，与协议无关
+		不要覆盖其中的service(ServletRequest req,ServletResponse resp)方法，而应该覆盖掉，doXXX方法。(请求HttpServlet时还会调用service方法，但是HttpServlet内部已经实现了servlet方法并根据请求方式进行相应的处理，如果覆盖了service方法就失去了继承HttpServlet的意义了。HttpServlet中doXXX方法默认都是返回错误提示信息的，所以要覆盖并自己实现功能)
+		doXXX就是根据你的请求方式来的。
+		
+		
+		HttpServlet中的service方法是典型的模板方法设计模式的具体应用。
+		
+**	六、Servlet配置
+		1、一个Servlet可以被映射到多个URL地址上
+		2、URL地址映射还支持通配符:*
+			方式一：以*开头，以扩展名结尾。比如 <url-pattern>*.do</url-pattern>
+			方式二：以/前缀开头，以*结尾。 比如<url-pattern>/action/*</url-pattern>
+		3、多个Servlet使用通配符时，有可能有多个匹配的Servlet,到底执行哪一个？
+		   原则：优先级
+				绝对匹配
+				以"/"开头（方式二）要比"*"开头（方式一）优先级高
+				都以"/"开头，还是有多个匹配，找最匹配的
+		4、如果一个Servlet的映射为一个"/",就称之为默认的Servlet，它负责处理没有映射路径的URL请求的响应。
+		
+		在<tomcat的安装目录>\conf\web.xml文件中，注册了一个名称为org.apache.catalina.servlets.DefaultServlet的Servlet，并将这个Servlet设置为了缺省Servlet，所以当请求的URL有匹配时，会访问对应的servlet，没有匹配时都会先请求DefaultServlet，即使请求的是静态资源
+
+*****七、Servlet中的线程安全问题
+*****八、ServletContext对象

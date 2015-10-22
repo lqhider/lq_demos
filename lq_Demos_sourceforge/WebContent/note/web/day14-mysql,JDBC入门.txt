@@ -1,0 +1,132 @@
+***一、表的复杂查询
+	1、连接查询
+		1.0连接的基本语法格式：
+			from TABLE1 join_type TABLE2 [on (join_condition)][where (query_condition)]
+			TABLE1:左表
+			TABLE2：右表
+			join_type：连接的类型。交叉、内连接、左外连接、右外连接
+			on：设置连接条件
+			where：对连接查询的结果进一步的筛选
+		1.1交叉连接
+			select * from CUSTOMER cross join ORDERS;
+			或者
+			select * from CUSTOMER,ORDERS;
+			
+			select c.name,o.order_number from CUSTOMER c,ORDERS o;
+		1.2内连接：
+			隐式内连接：(不使用on关键字，使用where)
+				select * from CUSTOMER c,ORDERS o where c.id=o.customer_id;
+			显式内连接：(使用on关键字)
+				select * from CUSTOMER c inner join ORDERS o on c.id=o.customer_id;
+		1.3外连接：
+			左外连接：(返回符合连接条件的所有记录，同时还返回左表中其余的所有记录)
+				select * from CUSTOMER c left outer join ORDERS o on c.id=o.customer_id;
+			右外连接：(返回符合连接条件的所有记录，同时还返回右表中其余的所有记录)
+				select * from CUSTOMER c right outer join ORDERS o on c.id=o.customer_id;
+	2、子查询（嵌套查询）
+		查询“陈冠希”的所有订单信息
+		查询“陈冠希”的客户id select id from customer where name='陈冠希';
+		查询订单信息：  select * from orders where customer_id=1;
+		
+		子查询： select * from orders where customer_id=(select id from customer where name='陈冠希');
+	3、联合查询
+		SELECT * FROM orders WHERE price>200 UNION SELECT * FROM orders WHERE customer_id=1;
+		取两条语句的并集，并去除重复的记录。
+	4、报表查询（合计函数）（使用原来的test数据库）
+		
+		统计一个班级共有多少学生？
+		select count(*) from student;
+		统计数学成绩大于90的学生有多少个？
+		select count(*) from student where math>=90;
+		统计总分大于250的人数有多少？
+		select count(*) from student where (chinese+math+english)>250;
+		
+		统计一个班级数学总成绩？
+		select sum(math) from student;
+		统计一个班级语文、英语、数学各科的总成绩
+		select sum(chinese),sum(english),sum(math) from student;
+		统计一个班级语文、英语、数学的成绩总和
+		select sum(chinese+english+math) from student;
+		统计一个班级语文成绩平均分
+		select sum(chinese)/count(*) from student;
+		求一个班级数学平均分？
+		select avg(math) from student;
+		求一个班级总分平均分
+		select avg(chinese+english+math) from student;
+
+Tips:如果要使用关键字作为表名，要使用`(Esc按键下面的)包围起来。
+		对订单表中商品归类后，显示每一类商品的总价
+		select product,sum(price) from orders group by product;
+		查询购买了几类商品，并且每类总价大于100的商品
+		select product,sum(price) from orders group by product having sum(price)>100;
+
+		where和group by的区别：having只用于group by的过滤，where后面可以跟表达式group by不可以，group by后面可以跟合计函数where不可以
+二、MySQL的数据库的备份与恢复
+	数据库的备份：(不会备份数据库名)
+		shell>mysqldump -u root -psorry test>c:/test.sql 
+	恢复数据库：(数据库名必须存在)
+		方式一：
+		shell>mysql -u root -psorry test<c:/test.sql
+		
+		方式二：
+		mysql>USE test;
+		mysql>SOURCE c:/test.sql;
+三、JDBC概述
+	JDBC:Java DataBase Connectivity(Java连接数据库的标准。SUN制定的)
+	JDBC和数据库的驱动是什么关系？JDBC是规范，抽象层，数据库驱动是具体的实现。
+	JDBC规范由一些抽象类和接口组成，一般放在java.sql.*或javax.sql.*包中（JDK中带了）
+	
+*****四、JDBC编码的步骤
+	准备：把数据库的驱动加入到构建路径中
+	1、加载驱动程序并注册驱动
+	2、获取与数据库的连接
+	3、得到代表SQL语句的对象，并发送SQL给数据库
+	4、如果有查询结果，得到封装了查询结果的对象
+	5、遍历结果
+	6、释放占用的资源
+	
+五、JDBC中常用接口和类的详细讲解
+	1、DriverManager
+		作用：注册驱动，得到数据库的连接
+		注册驱动：
+			DriverManager.registDriver(new com.mysql.jdbc.Driver());(不可取)
+			原因：1、严重依赖具体的数据库驱动。2、会导致驱动注册2遍。
+			替代方案：
+		获取数据库的连接：
+			static Connection getConnection(String url,String user,String password):
+					url:数据库的连接串。
+						mysql：jdbc:mysql://localhost:3306/day14数据库名或者jdbc:mysql:///day14(连接本地默认端口上的mysql数据库)
+					user:数据库的用户名
+					password:数据库的密码
+			static Connection getConnection(String url,Properties info)
+			static Connection getConnection(String url)
+			
+	2、Connection
+		所有与数据库交互都必须建立在连接的基础上
+	3、Statement
+		作用：代表着SQL语句
+		常用的方法：
+			ResultSet executeQuery(String sql):sql是DQL语句
+			int executeUpdate(String sql):sql是DML语句。或者是没有返回结果的DDL也可以。返回值，代表着语句影响到的行数。
+			boolean execute(String sql):sql可以是任何的sql语句。如果有结果集返回，返回true。否则返回false。	
+										
+	4、ResultSet
+		boolean next():下移一行
+		boolean previous():上移一行
+		void absolute(int row):第一行的记录就是1
+		void beforeFirst():移动到第一行的前面
+		void afterLast():移动到最后一行的后面
+		
+	5、释放资源(出现异常后本代码块的后续代码不再执行，其他代码块的代码继续执行)
+六、利用JDBC对数据库进行CRUD
+七、利用JDBC改写原有的用户注册和登录的案例
+八、SQL的注入及防范
+
+PreparedStatement:(尽量使用它，就不要再使用Statement)
+	作用：
+	1、预编译SQL语句，数据库执行效率高。
+	2、防止SQL注入
+	3、支持参数占位符"?"
+	
+
+九、客户管理系统（Web项目CRUD）

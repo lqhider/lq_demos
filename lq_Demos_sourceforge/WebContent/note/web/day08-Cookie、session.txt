@@ -1,0 +1,47 @@
+*****一、Cookie的案例：记录用户最近商品的访问记录
+*****二、HttpSession概述及原理探讨
+	得到HttpSession对象：
+		HttpServletRequest.getSession():根据特殊Cookie（JSESSIONID=HttpSession对象的id,由服务器生成，唯一的）的取值，在服务器的内存中根据id查找
+										这个HttpSession对象，找到了，取出来继续服务；没有找到，创建一个新的HttpSession对象。
+		HttpServletRequest.getSession(boolean b):如果b为true，与上面方法功能完全一致。如果为false，只查询。
+		
+	HttpSession对象是服务器维护的，每个用户浏览器都有一个相对应的HttpSession对象，有100个用户访问的话服务器内存中就有100个不同的HttpSession对象
+	其实session就是向客户端写入一个特殊的Cookie，这个Cookie的名称是JSESSIONID，值是HttpSession对象唯一的id，path是当前应用，所以这个应用里的任何东西都能访问到这个session对象
+	HttpSession对象往客户端写入的Cookie默认是会话周期的，浏览器关闭后Cookie就消失了，可以自己创建名称为JSESSIONID的Cookie对象，来生成永久的Cookie
+	HttpSession对象默认会存在30分钟，30分钟后消失，可以配置时间的长短，所以即使使用的是默认的HttpSession对象，浏览器关闭时，HttpSession对象也不会消失，只是客户端的Cookie消失了，所以浏览器关闭后再次访问时，无法获取上次的会话信息
+*****三、HttpSession案例：
+	*****完成用户的一次性登录（随机验证码验证）
+	*****简单购物原理案例
+	*****防止表单的重复提交（Base64编码）
+	
+		重复提交就是由于网络延迟，用户可能多次点击提交按钮，造成数据多次提交，或者动作执行完成后，点击刷新，造成数据的再次重复提交
+		使用js方法使按钮失效可以防止点击按钮重复提交，但是不能防止刷新动作的重复提交
+
+		Base64编码原理：把3个字节转换为4个字节
+							1010 1100    0101 1111     1010 0101
+			转成4个字节   0010 1011    0000    0101   0011 1110   0010 0101
+			转成4个字节后，每一个字节表示的最大和最小数：00111111 ~  00000000
+			63~0共64个整数，所以称之为Base64，它其实是一个码表，每个数字对应一个可见字符
+			
+		java.util.UUID:通用的唯一标识符
+		
+*****四、客户端禁用Cookie后的会话数据保存问题
+		客户端禁用Cookie就是访问网页时浏览器不带任何的cookie
+		
+		客户端禁用Cookie对http://localhost访问的无效
+		
+		url---->url;JSESSIONID=123:URL重写.必须对网站中的所有URL地址都重写。中间只要有一个断了，就找不到session了
+		HttpServletResponse.encodeURL(url)：是一个智能方法。判断用户是否禁用了Cookie，没有禁用，则不重写；禁用了就重写。但是第一次访问的时候它并不知道客户端是否禁用了Cookie，所以第一次访问时可能还是会重写URL
+
+		第一次访问的页面要生成session对象，才能重写URL，否则没有session对象就没有sessionId，重写的URL中就没有sessionId		
+		
+		网站主页：为了更好访问本网站，请不要禁用您的Cookie。
+		
+*****五、HttpSession对象的状态及转换（序列化）
+	1、如何更改内存中HttpSession对象的超时时间。
+		修改web.xml
+		  <session-config>
+			<session-timeout>1</session-timeout><!--自然整数，单位是分钟-->
+		  </session-config>
+
+	2、服务器或应用重启或重新加载时会将内存中的session对象持久化到硬盘中(work工作目录中)，这时如果放在session对象中的实例对应的类没有实现Serializable接口的话就会报序列化异常,所以实体类要直接或间接实现Serializable接口从而能够进行对象的持久化

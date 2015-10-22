@@ -1,0 +1,68 @@
+****一、客户管理系统的实现（JavaWeb+JDBC)
+	1、建立数据库
+		create database day15;
+		use day15;
+		create table customer(
+			id varchar(100) primary key,
+			name varchar(200),
+			gender varchar(10),
+			birthday date,
+			cellphone varchar(20),
+			email varchar(200),
+			hobby varchar(200),
+			type varchar(100),
+			description varchar(255)
+		);
+	2、建立JavaWeb应用，搭建开发环境（jar包）
+		mysqldriver.jar
+		beanutils.jar
+		commons-logging.jar
+		jstl.jar
+		standard.jar
+		
+****二、大数据显示时分页（有难度哦）
+MySQL:select * from customer limit m,n;
+m:每页开始的记录的索引号。（从0开始）
+n:每页显示的条数
+
+每页显示10条
+第1页的数据：select * from customer limit 0,10;
+第2页的数据：select * from customer limit 10,10;
+第3页的数据：select * from customer limit 20,10;
+
+每页开始记录的索引=(当前页码-1)*每页显示的条数
+
+
+总共多少页=总条数%每页显示的条数==0？总条数/每页显示的条数:总条数/每页显示的条数+1；
+
+
+DAO层改造：
+	/**
+	 * 查询记录的总条数
+	 */
+	int getTotalRecords();
+	/**
+	 * 查询分页数据
+	 * @param startIndex 每页开始记录的索引编号
+	 * @param pagesize 每页显示的记录条数
+	 * @return
+	 */
+	List<Customer> findPageRecords(int startIndex,int pagesize);
+
+Service改造：
+	/**
+	 * 根据用户要看的页码返回封装了分页有关数据的Page对象
+	 */
+	Page findPageReocrds(String pagenum);
+
+Servlet改造：
+		String pagenum = request.getParameter("pagenum");//用户要看的页码
+		Page page = s.findPageReocrds(pagenum);
+		page.setServletUrl("/servlet/ShowAllCustomersServlet");
+		request.setAttribute("page", page);
+		request.getRequestDispatcher("/listCustomers.jsp").forward(request, response);
+
+三、批处理
+
+四、大文本和大二进制的数据库存取
+

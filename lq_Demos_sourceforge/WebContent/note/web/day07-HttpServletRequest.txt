@@ -1,0 +1,116 @@
+*****一、HttpServletRequest详解
+	代表着客户端的请求。要客户的信息只要找这个对象即可，该对象由容器创建。
+	学习关键：时刻记住HTTP协议的请求部分的具体内容。
+	
+	6.1常用简单方法
+	6.2获取请求消息头
+	6.3获取请求参数（内省）
+	6.4常用表单数据的获取
+		表单输入域类型：
+			radio checkbox,即使表单中有对应名称的输入域，如果一个都不选择，则什么数据都不会带给服务器。（返回null,注意空指针异常）
+			如果选择了其中的一个或多个，则把他们的value的取值提交给服务器。
+			如果选择了其中的一个或多个，他们又没有value取值，则提交给服务器的值是on.
+			使用BeanUtils进行数据封装时，JavaBean中布尔值类型的属性的值如果是on会自动转换为true，其他值为false
+		请求参数的编码：
+			浏览器当前使用什么编码，就以什么编码提交请求参数。<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+			
+			request.setCharacterEncoding(编码):通知程序，客户端提交的数据使用的编码。但是只对POST请求方式有效(如果不写这句话，就使用默认编码ISO-8859-1)
+			
+			如果是get请求提交数据，编码就是ISO-8859-1
+			
+		Tips：目前采用POST提交方式。
+		
+	6.5域对象：
+		ServletRequest也是一个域对象（内部维护了一个Map<String,Object>）
+			Object getAttribute(Stirng name):
+			void setAttribute(String name,Object value):
+			void removeAttribute(String name):
+		
+	6.6请求转发和重定向
+		请求转发借助于RequestDispatcher
+		如何得到RequestDispatcher对象：
+			方式一：ServletContext.getRequestDispatcher(目标资源的URI);
+			方式二：ServletRequest.getRequestDispatcher(目标资源的URI);
+			区别：
+				方式一中的目标资源的URI必须以"/"开头，否则报错，此"/"就表示的是当前应用（绝对路径表示法）
+				方式二中的目标资源的URI如果以"/"开头，就表示的是当前应用（绝对路径表示法）。如果不以"/"开头，就表示相对路径。
+				
+		
+	（了解原则）6.7转发和重定向细节（实际开发中知道一个原则）
+		1、请求转发：由源组件转发到目标组件时，容器会清空源组件输出的数据。因此，用户只会看到目标组件输出的页面结果。
+					但是，响应头信息是不清空的。
+		编码原则：不要在转发前后向页面输出数据，也不要关闭输出流。（做无用功）
+	（了解原则）6.8包含：（动态包含）
+		由源组件包含到目标组件时，容器会清空目标组件的头。因此，源组件设置的头才有效。
+					但是，响应体信息是不清空的。
+		编码原则：不要在目标组件中设置响应头。（做无用功）
+*****二、会话概述
+	1、会话过程就好比打电话。
+	2、学习会话要解决的问题是什么？
+		会话过程中的数据保存。就是在一次会话过程之中，会发出很多次请求，无论哪次请求都能知道是谁发出的请求
+		会话过程就是从开启浏览器到关闭浏览器的过程
+	
+	三、Cookie和HttpSession简介
+		Cookie是客户端技术
+		HttpSession是服务器端技术
+		
+	四、Cookie详细介绍
+		javax.servlet.http.Cookie
+		1、Cookie是什么？
+			一个小信息，由服务器写给浏览器的。由浏览器来保存。
+			客户端保存的Cookie信息，可以再次带给服务器。
+		2、Cookie的属性：
+			name：必须的
+			value:必须的
+			comment:可选的。注释
+			path：可选的。
+					写Cookie的程序的访问路径是：http://localhost:8080/day07/servlet/CookieDemo1
+							其中：localhost就是域名；/day07/servlet就是当前Cookie的path
+							
+							
+					访问的地址的URI.startWith(cookie的路径),为true就带
+					
+					比如IE存的cookie的路径是/day07
+					现在访问的地址是：http://localhost:8080/day07/servlet/CookieDemo1  带
+					现在访问的地址是：http://localhost:8080/day07/CookieDemo1          带
+					
+					比如IE存的cookie的路径是/day07/servlet/
+					现在访问的地址是：http://localhost:8080/day07/servlet/CookieDemo1  带
+					现在访问的地址是：http://localhost:8080/day07/CookieDemo1          不带
+					
+					如果一个Cookie的路径设置成了/day07，意味着什么？当前应用下的所有资源浏览器都会带着它给服务器。
+					
+			domain：可选的。该Cookie所属的网站域名。（itcast.cn）默认值。
+			maximum age：可选的。不设置就是会话过程（存在浏览器的内存中）。单位是秒
+							如果是0，说明要删除。
+			version：可选的。
+			
+		3、如何向客户端写Cookie：HttpServletResponse.addCookie(javax.servlet.http.Cookie)（就是写了一个响应消息头：Set-Cookie:cookie的信息）
+			特点：一个浏览器针对一个网站最多存20个Cookie；最多存300个Cookie，每个Cookie的长度不能超过4KB。（稀缺）
+		
+		4、服务器如何得到客户端传来的Cookie。HttpServletRequest.getCookies()
+		5、如何区分Cookie：通过名称不行。
+			domain+path+name来区分的。
+			localhost/day07/servlet/lastAccessTime
+	五、Cookie案例：
+		5.1记住用户最后一次的访问时间
+		
+		5.2记住用户登录时的用户名
+		5.3电商网站：记住用户商品的历史浏览记录
+		
+		
+	六、各种URL地址的写法
+		相对路径
+		绝对路径：（建议的）
+		绝对路径怎么写？什么时候需要加上应用名称"/day07"?
+		原则：地址是不是给服务器用的，如果是,"/"就代表着当前应用。如果是给客户端用的绝对路径要加上应用名称。
+		
+		
+		<link href=path/>						要加/day07
+		<script src=path/>						要加/day07
+		<img src=path/>							要加/day07
+		<a href=path/>							要加/day07
+		RequestDispatcher.include(path)					不要加，"/"就代表着当前应用
+		RequestDispatcher.forward(path)					不要加，"/"就代表着当前应用
+		HttpServletResponse.sendRedirect(path)				要加/day07
+		ServletContext.getRealPath(path)				不要加，"/"就代表着当前应用

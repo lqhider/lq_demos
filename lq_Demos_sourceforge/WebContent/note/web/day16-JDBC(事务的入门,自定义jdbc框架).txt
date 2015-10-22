@@ -1,0 +1,147 @@
+一、获取数据库自动生成的主键:主键的值最好由自己的程序来维护
+	create database day16;
+	use day16;
+	create table t1(
+		id int primary key auto_increment,
+		name varchar(100)
+	);
+二、如何调用存储过程
+***三、事务入门
+TPL：事务控制语句
+
+start transaction:开启一次事务
+rollback:回滚
+commit：提交事务
+
+JDBC中与事务有关的方法：
+Connection.setAutoCommit(boolean b)
+Connection.rollback()
+Connection.rollback(Savepoint sp)
+Connection.commit();
+
+
+*****四、事务的特性（隔离级别）
+A:原子性。说明事务是一个不可分割的单位。
+C：一致性.事务必须使数据库从一个一致性状态变换到另外一个一致性状态.(比如转账)
+*I：隔离性。一个事务不能被其他事务打扰。
+D：持久性。事务一旦提交，就应该被永久保存起来。
+
+如果不考虑事务的隔离级别，会出现以下“不正确”的情况：
+脏读：指一个事务读到了另一个事务中未提交的数据。
+不可重复读：针对一条记录的，同一条记录前后不一样
+虚读（幻读）：针对一张表，前后读到的记录条数不一样。
+
+MySQL中控制事务隔离级别的语句：
+select @@tx_isolation;     //查看当前的事务隔离级别
+set transaction isolation level 你的级别（四种之一）;//设置隔离级别
+
+
+
+
+隔离级别的分类：
+READ UNCOMMITTED:脏读、不可重复读、虚读都有可能发生。
+READ COMMITTED:能避免脏读，不可重复读、虚读都有可能发生。
+REPEATABLE READ:能避免脏读、不可重复度，虚读都有可能发生。(开发中使用这种隔离级别,也是数据库默认使用的隔离级别)
+SERIALIZABLE:能避免脏读、不可重复度、虚读。
+
+
+*****五、数据库连接池原理
+
+*****六、编写标准的数据库连接池
+	实现了javax.sql.DataSource的才是标准的数据库连接池，按照字面意思，一般称之为数据源。
+	
+	对于一个已知类的某个方法进行功能上的改变有以下三种方式：
+	1、定义子类，扩展父类的某个功能。（此处行不通）
+	2、利用包装设计模式改写原有的类的功能
+		a、编写一个类实现与被改写类（com.mysql.jdbc.Connection）相同的接口
+		b、定义一个引用，记住被改写类的实例
+		c、定义构造方法，传入被改写类的实例
+		d、对于要改写的方法，改写即可
+		e、对于不需要改写的方法，调用原有的对象的对应方法
+		
+		*****包装设计模式
+		*****默认适配器设计模式
+		
+	3、动态代理
+		*****基于接口的动态代理
+	java.lang.reflect.Proxy
+	static Object newProxyInstance(ClassLoader loader, Class<?>[] interfaces, InvocationHandler h) 
+ 
+	作用：返回代理类的实例
+	参数：loader：类加载器，一般与被代理对象使用同一个
+		 interfaces：被代理对象所实现的接口
+		 h：怎么代理
+			 Object invoke(Object proxy, Method method, Object[] args) ：调用原有类的任何方法，都会经过此方法。
+			 
+***七、开源的数据源使用
+		DBCP：DataBase Connection Pool
+			1、需要的jar：commons-dbcp.jar  commons-pool.jar
+			2、把DBCP的配置文件拷贝到构建路径中
+			3、
+			package cn.itcast.util;
+
+			import java.io.InputStream;
+			import java.sql.Connection;
+			import java.sql.ResultSet;
+			import java.sql.SQLException;
+			import java.sql.Statement;
+			import java.util.Properties;
+
+			import javax.sql.DataSource;
+
+			import org.apache.commons.dbcp.BasicDataSourceFactory;
+
+			public class DBCPUtil {
+				private static DataSource ds;
+				static{
+					try {
+						InputStream in = DBCPUtil.class.getClassLoader().getResourceAsStream("dbcpconfig.properties");
+						Properties props = new Properties();
+						props.load(in);
+						ds = BasicDataSourceFactory.createDataSource(props);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				public static Connection getConnection(){
+					try {
+						return ds.getConnection();
+					} catch (SQLException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				public static void release(ResultSet rs,Statement stmt,Connection conn){
+					if(rs!=null){
+						try {
+							rs.close();
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+						rs = null;
+					}
+					if(stmt!=null){
+						try {
+							stmt.close();
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+						stmt = null;
+					}
+					if(conn!=null){
+						try {
+							conn.close();
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+						conn = null;
+					}
+				}
+			}
+
+		C3P0：是一个机器人的代号
+			拷贝jar包
+			
+**八、数据库元信息的获取（编写框架时使用）
+*****九、编写属于自己的JDBC框架（反射）
+			策略设计模式
+			
